@@ -21,7 +21,8 @@ class Calendar {
     //date settings
     protected static $_year;
     protected static $_month;
-    protected static $_day_or_week;
+    protected static $_day;
+    protected static $_week;
     protected static $_first_day;
     protected static $_days_in_month;
     protected static $_weeks_in_month;
@@ -55,7 +56,34 @@ class Calendar {
 
     public function render($view = null)
     {
-        $build = 'build_'.self::$_view;
+        if($view)
+        {
+            self::$_view = $view;
+        }
+        else
+        {
+            self::$_view = 'Calendar::month';
+        }
+
+        if(str_contains(self::$_view, '::'))
+        {
+            list($bundle, $view) = explode('::', self::$_view);
+        }
+
+        
+        
+        if(str_contains($view, '/'))
+        {
+            $viewArr = explode('/', $view);
+            $view = array_pop($viewArr);
+        }
+
+        if($view != 'week' and $view != 'day')
+        {
+            $view = 'month';
+        }
+
+        $build = 'build_'.$view;
 
         // set data
         $data = array(
@@ -75,7 +103,7 @@ class Calendar {
         );
 
 
-        echo View::make('calendar::'.self::$_view, $data)->render();
+        echo View::make(self::$_view, $data)->render();
 
     }
     
@@ -93,16 +121,6 @@ class Calendar {
             self::$_instance = new self;
         }
 
-        // set config value to properties
-        // foreach (Config::get('calendar::config') as $key => $value) {
-        //     echo $key . ' : ' . $value . '<br/>';
-        // }
-
-        //check view values
-        // if($view != 'week' and $view != 'day')
-        // {
-        //     $view = 'month';
-        // }
         // convert year and month to ints
         !is_int($year) and $year = (int)$year;
         !is_int($month) and $month = (int)$month;
@@ -131,12 +149,13 @@ class Calendar {
         
         // set properties
         // $this->_view = $view;
-        self::$_month = $month;
-        self::$_year = $year;
-        self::$_day_or_week = $day;
-        self::$_data = $data;
-        self::$_days_in_month = self::find_days_in_month($month, $year);
-        self::$_first_day = self::find_first_weekday_of_month($month, $year);
+        self::$_month          = $month;
+        self::$_year           = $year;
+        self::$_day            = $day;
+        self::$_week           = $weekIndex =ceil(substr(date('Y-m-d', mktime(0,0,0,self::$_month,self::$_day,self::$_year)), -2) / 7);
+        self::$_data           = $data;
+        self::$_days_in_month  = self::find_days_in_month($month, $year);
+        self::$_first_day      = self::find_first_weekday_of_month($month, $year);
         self::$_weeks_in_month = self::find_weeks_in_month(self::$_days_in_month, self::$_first_day);
 
         return self::$_instance;
@@ -203,16 +222,18 @@ class Calendar {
     {   
         $month = self::build_month();
 
-        return $month[self::$_day_or_week];
+        
+
+        return $month[self::$_week];
     }
     
     protected static function build_day()
     {
         $data = array(
-            'date' => self::$_day_or_week,
-            'attributes' => isset(self::$_data[self::$_day_or_week]['attributes']) ?  self::$_data[self::$_day_or_week]['attributes'] : null,
-            'link' => isset(self::$_data[self::$_day_or_week]['link']) ?  self::$_data[self::$_day_or_week]['link'] : null,
-            'text' => isset(self::$_data[self::$_day_or_week]['text']) ? self::$_data[self::$_day_or_week]['text'] : null
+            'date' => self::$_day,
+            'attributes' => isset(self::$_data[self::$_day]['attributes']) ?  self::$_data[self::$_day]['attributes'] : null,
+            'link' => isset(self::$_data[self::$_day]['link']) ?  self::$_data[self::$_day]['link'] : null,
+            'text' => isset(self::$_data[self::$_day]['text']) ? self::$_data[self::$_day]['text'] : null
         );
         
         return $data;
@@ -264,7 +285,7 @@ class Calendar {
         {
             if (self::$_view == 'week')
             {
-                $week = self::$_day_or_week + 1;
+                $week = self::$_day + 1;
                 $month = self::$_month;
                 $year = self::$_year;
                 if ($week > self::$_weeks_in_month)
@@ -281,7 +302,7 @@ class Calendar {
             }
             else if (self::$_view == 'day')
             {
-                $day = self::$_day_or_week + 1;
+                $day = self::$_day + 1;
                 $month = self::$_month;
                 $year = self::$_year;
                 if ($day > self::$_days_in_month)
@@ -313,7 +334,7 @@ class Calendar {
         {
             if (self::$_view == 'week')
             {
-                $week = self::$_day_or_week - 1;
+                $week = self::$_day - 1;
                 $month = self::$_month;
                 $year = self::$_year;
                 if ($week <= 0)
@@ -330,7 +351,7 @@ class Calendar {
             }
             else if (self::$_view == 'day')
             {
-                $day = self::$_day_or_week - 1;
+                $day = self::$_day - 1;
                 $month = self::$_month;
                 $year = self::$_year;
                 if ($day <= 0)
@@ -412,7 +433,7 @@ class Calendar {
         else if (self::$_view == 'week')
         {
             $month = self::build_month();
-            return $month[self::$_day_or_week][1]['date'];
+            return $month[self::$_day][1]['date'];
         }
         return $this->_day_or_week;
     }
@@ -433,7 +454,7 @@ class Calendar {
             {
                 foreach ($week as $day)
                 {
-                    if ($day['date'] == self::$_day_or_week)
+                    if ($day['date'] == self::$_day)
                     {
                         return $week_num;
                     }
@@ -441,6 +462,6 @@ class Calendar {
             }
             return 1;
         }
-        return self::$_day_or_week;
+        return self::$_day;
     }
 }

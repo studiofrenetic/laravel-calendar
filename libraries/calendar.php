@@ -89,7 +89,7 @@ class Calendar {
         $data = array(
             //dates
             'build'      => $build,
-            'days'       => Lang::line('calendar::calendar.days'),
+            'days'       => Lang::line('calendar::calendar.days')->get(),
             'month'      => Lang::line('calendar::calendar.months.'.self::$_month),
             'year'       => self::$_year,
             'calendar'   => self::$build(),

@@ -1,0 +1,14 @@
+{
+    "name": "frenesie/bundles/calendar",
+    "description": "Calendar Bundle",
+    "authors": [
+        {
+            "name": "Mathieu Doyon",
+            "email": "mathieu.doyon@studiofrenetic.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "minimum-stability": "dev"
+}
